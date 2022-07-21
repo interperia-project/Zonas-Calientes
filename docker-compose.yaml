@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  analytics:
+    build: 
+      context: ./analytics
+      dockerfile: fastapi.Dockerfile
+    container_name: analytics
+    ports:
+      - ${ANALYTICS_CONTAINER_PORT}:${ANALYTICS_HOST_PORT}
+    volumes:
+      - ./analytics:/analytics
+    networks:
+      - backend
+
+  backend:
+    build: 
+      context: ./backend/back
+      dockerfile: node.Dockerfile
+    container_name: node-backend
+    ports:
+      - ${NODE_CONTAINER_PORT}:${NODE_HOST_PORT}
+    volumes:
+      - ./backend/back:/node_backend
+    networks:
+      - backend
+
+  mysql_db:
+    image: mysql
+    restart: always
+    container_name: mysql_db
+    ports:
+      - ${MYSQL_DATABASE_CONTAINER_PORT}:${MYSQL_DATABASE_HOST_PORT}
+    volumes:
+      - mysql_db:/var/lib/mysql
+      - ./mysql_db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file:
+      - .environment
+    environment:
+      MYSQL_ROOT_USER: "${MYSQL_ROOT_USER}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+    networks:
+      - backend
+
+
+
+      
+volumes:
+  mysql_db:
+  analytics:
+
+networks:
+  backend:
+    driver: bridge
+  frontend: 
