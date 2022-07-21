@@ -24,6 +24,7 @@ services:
       - ./backend/back:/node_backend
     networks:
       - backend
+      - frontend
 
   mysql_db:
     image: mysql
@@ -34,8 +35,6 @@ services:
     volumes:
       - mysql_db:/var/lib/mysql
       - ./mysql_db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    env_file:
-      - .environment
     environment:
       MYSQL_ROOT_USER: "${MYSQL_ROOT_USER}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
@@ -43,7 +42,17 @@ services:
     networks:
       - backend
 
-
+  mongo_db:
+    image: mongo:5.0
+    restart: always
+    container_name: mongo_db
+    ports:
+      -  ${MONGO_CONTAINER_PORT}:${MONGO_HOST_PORT}
+    volumes:
+      - ./backend/db:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
 
       
 volumes:
