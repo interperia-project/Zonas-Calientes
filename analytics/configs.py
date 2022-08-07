@@ -1,8 +1,7 @@
-
 APIREST_PORT = 8000
-APIREST_HOST = "localhost"
+APIREST_HOST = "analytics"
 ALLOWED_ORIGINS= {
     "http://localhost",
-    "http://localhost:8080"
+    "http://backend:8080"
     "http://localhost:5000",
 }

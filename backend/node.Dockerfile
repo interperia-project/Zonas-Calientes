@@ -1,6 +1,8 @@
 FROM node:latest
 
-WORKDIR /app
+RUN mkdir -p /usr/src/app
+
+WORKDIR /usr/src/app
 
 COPY package*.json ./
 

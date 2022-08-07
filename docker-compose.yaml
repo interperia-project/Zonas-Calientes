@@ -9,22 +9,21 @@ services:
     ports:
       - ${ANALYTICS_CONTAINER_PORT}:${ANALYTICS_HOST_PORT}
     volumes:
-      - ./analytics:/analytics
-    networks:
-      - backend
+      - analytics:/analytics
 
-  backend:
-    build: 
-      context: ./backend/back
-      dockerfile: node.Dockerfile
-    container_name: node-backend
+  mongo_db:
+    image: mongo:5.0
+    restart: always
+    container_name: mongo_db
     ports:
-      - ${NODE_CONTAINER_PORT}:${NODE_HOST_PORT}
+      -  ${MONGO_CONTAINER_PORT}:${MONGO_HOST_PORT}
     volumes:
-      - ./backend/back:/node_backend
-    networks:
-      - backend
-      - frontend
+      - mongo_db:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
+    logging:
+      driver: none
 
   mysql_db:
     image: mysql
@@ -39,27 +38,29 @@ services:
       MYSQL_ROOT_USER: "${MYSQL_ROOT_USER}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_DATABASE: "${MYSQL_DATABASE}"
-    networks:
-      - backend
+    logging:
+      driver: none
 
-  mongo_db:
-    image: mongo:5.0
-    restart: always
-    container_name: mongo_db
-    ports:
-      -  ${MONGO_CONTAINER_PORT}:${MONGO_HOST_PORT}
-    volumes:
-      - ./backend/db:/data/db
+  nodejs-backend:
+    build: 
+      context: ./backend
+      dockerfile: node.Dockerfile
+    container_name: nodejs-backend 
     environment:
-      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
-      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
+      MONGO_USERNAME: "${MONGO_ROOT_USER}"
+      MONGO_PASSWORD: "${MONGO_ROOT_PASSWORD}"
+      MONGO_HOSTNAME: "${MONGO_HOSTNAME}"
+      MONGO_HOST_PORT: "${MONGO_HOST_PORT}"
+      MONGO_DATASET: "${MONGO_DATASET}"
+    ports:
+      - ${NODE_CONTAINER_PORT}:${NODE_HOST_PORT}
+    volumes:
+      - nodejs_backend:/node/app
+    depends_on:
+      - mongo_db
 
-      
 volumes:
+  mongo_db:
   mysql_db:
   analytics:
-
-networks:
-  backend:
-    driver: bridge
-  frontend: 
+  nodejs_backend: 
