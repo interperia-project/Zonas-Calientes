@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.7'
 
 services:
   analytics:
@@ -9,7 +9,7 @@ services:
     ports:
       - ${ANALYTICS_CONTAINER_PORT}:${ANALYTICS_HOST_PORT}
     volumes:
-      - analytics:/analytics
+      - ./analytics:/analytics
 
   mongo_db:
     image: mongo:5.0
@@ -18,49 +18,33 @@ services:
     ports:
       -  ${MONGO_CONTAINER_PORT}:${MONGO_HOST_PORT}
     volumes:
-      - mongo_db:/data/db
+      - ./db:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD}"
     logging:
       driver: none
 
-  mysql_db:
-    image: mysql
-    restart: always
-    container_name: mysql_db
-    ports:
-      - ${MYSQL_DATABASE_CONTAINER_PORT}:${MYSQL_DATABASE_HOST_PORT}
-    volumes:
-      - mysql_db:/var/lib/mysql
-      - ./mysql_db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      MYSQL_ROOT_USER: "${MYSQL_ROOT_USER}"
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-    logging:
-      driver: none
-
-  nodejs-backend:
+  backend:
     build: 
       context: ./backend
       dockerfile: node.Dockerfile
-    container_name: nodejs-backend 
+    container_name: backend 
     environment:
       MONGO_USERNAME: "${MONGO_ROOT_USER}"
       MONGO_PASSWORD: "${MONGO_ROOT_PASSWORD}"
       MONGO_HOSTNAME: "${MONGO_HOSTNAME}"
       MONGO_HOST_PORT: "${MONGO_HOST_PORT}"
       MONGO_DATASET: "${MONGO_DATASET}"
+      MONGODB_URL: "${MONGODB_URL}"
     ports:
       - ${NODE_CONTAINER_PORT}:${NODE_HOST_PORT}
+    command: npm run dev
     volumes:
-      - nodejs_backend:/node/app
+      - ./backend:/src
+      - nodemodules:/src/node_modules
     depends_on:
       - mongo_db
 
 volumes:
-  mongo_db:
-  mysql_db:
-  analytics:
-  nodejs_backend: 
+  nodemodules: {}

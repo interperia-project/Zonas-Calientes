@@ -1,15 +1,11 @@
-FROM node:latest
+FROM node:16.13.2
 
-RUN mkdir -p /usr/src/app
+WORKDIR /src
 
-WORKDIR /usr/src/app
-
-COPY package*.json ./
+COPY package*.json /src 
 
 RUN npm install
 
+COPY . /src 
+
 EXPOSE 3000
-
-COPY . .
-
-CMD [ "npm", "start" ]

@@ -15,7 +15,7 @@ class AnaliticEndPoints:
 
     @classmethod
     async def _index_endpoint(cls):
-        return AnaliticEndPoints.json_message("The APIRest is working...")
+        return AnaliticEndPoints.json_message("The APIRest is working.....")
 
     @classmethod
     async def _test_endpoint(cls, request: Request):
