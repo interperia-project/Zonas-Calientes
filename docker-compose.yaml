@@ -37,6 +37,7 @@ services:
       MONGO_HOST_PORT: "${MONGO_HOST_PORT}"
       MONGO_DATASET: "${MONGO_DATASET}"
       MONGODB_URL: "${MONGODB_URL}"
+      PORT: "${NODE_CONTAINER_PORT}"
     ports:
       - ${NODE_CONTAINER_PORT}:${NODE_HOST_PORT}
     command: npm run dev
