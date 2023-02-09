@@ -6,7 +6,7 @@ from modules.forecasting.manager import TimeForecastingManager
 class AnalyticEndPoints:
     @classmethod
     async def _index_endpoint(cls):
-        Logger.put_log("APIREST is working...")
+        Logger.log("APIREST is working...")
         return json_message("APIREST is working...")
 
     @classmethod

@@ -162,7 +162,7 @@ class ForecastingTrainer:
         units_array = arange(60, 101, 10)
 
         # TODO Improve performance metrics
-        Logger.put_log("Searching the best parameters ...")
+        Logger.log("Searching the best parameters ...")
 
         scores = []
         parameters = {}
@@ -172,13 +172,13 @@ class ForecastingTrainer:
             for units in units_array:
                 for batch_size in batch_size_array:
                     
-                    Logger.put_log(f"* Setting neuronal network")
+                    Logger.log(f"* Setting neuronal network")
                     ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
 
-                    Logger.put_log("* Preprocesing data")
+                    Logger.log("* Preprocesing data")
                     training_data = ForecastingTrainer.preprocessing(data, look_back, training_size)
 
-                    Logger.put_log("* Performing training process")
+                    Logger.log("* Performing training process")
                     results = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
                     
                     scores.append(results.get("scores")[1])
@@ -188,13 +188,13 @@ class ForecastingTrainer:
                         "batch_size": batch_size,
                         "training_size": training_size
                     }
-                    Logger.put_log(f"i: {iteration}, parameters: {parameters.get(iteration)}")
-                    Logger.put_log(f"MSE: {results.get('scores')[1]}")
-                    Logger.put_log(f"RMSE: {results.get('rmse')}")
+                    Logger.log(f"i: {iteration}, parameters: {parameters.get(iteration)}")
+                    Logger.log(f"MSE: {results.get('scores')[1]}")
+                    Logger.log(f"RMSE: {results.get('rmse')}")
                     iteration += 1
         
         best_parameters = parameters.get(scores.index(min(scores)))
-        Logger.put_log(f"Best parameters {best_parameters}")
+        Logger.log(f"Best parameters {best_parameters}")
         
         return best_parameters
         

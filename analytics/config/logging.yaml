@@ -20,13 +20,12 @@ handlers:
     backupCount: 3
 root:
   level: DEBUG
-  propagate: True
+  propagate: true
   handlers: [console, logfile]
 loggers:
-  uvicorn: 
+  general_logger:
     level: INFO
-  matplotlib:
-    level: WARNING
-  requests:
-    level: WARNING
+    propagate: false
+    handlers: [console, logfile]
+
 

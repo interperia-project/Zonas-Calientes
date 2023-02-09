@@ -10,10 +10,12 @@ class ApiRestManager:
 
     @classmethod
     def setup(cls) -> FastAPI:
-        Logger.put_log("::::.... Starting APIREST setup (Analytic component) .....::::")
+        Logger.log("::::.... Starting APIREST setup (Analytic component) .....::::")
         app = FastAPI()
-        app.include_router(cls._setup_router())  
+        app.include_router(cls._setup_router())
+        Logger.log("* Additonal configurations...")  
         app.add_middleware(CORSMiddleware,**APIREST_CONFIGURATIONS)
+        Logger.log("* Setup finished")
         return app
         
              
@@ -23,7 +25,7 @@ class ApiRestManager:
         :return: router object with the analitic endpoints
         :rtype: APIRouter
         """
-        Logger.put_log("* Adding all endpoints to a router class")
+        Logger.log("* Adding all endpoints to a router class")
         router = APIRouter()
         router.add_api_route(**AnalyticEndPoints.get_index_endpoint())
         router.add_api_route(**AnalyticEndPoints.get_forecasting_endpoint())

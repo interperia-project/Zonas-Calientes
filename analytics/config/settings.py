@@ -30,12 +30,6 @@ APIREST_CONFIGURATIONS = {
     "allow_headers": ["*"]
 }
 
-# ::::::....... Database connections configs......::::::
-DB_CONFIGS = {
-    "mysql_db_local": {"engine":"mysql", "credentials_name": "MYSQL_DB_LOCAL"},
-    "mongo_db": {"engine": "mongo",  "credentials_name": "MONGO_DB"}
-}
-
 
 # ::::::....... Firebase storage service connection configs ......::::::
 FIREBASE_CONFIGS = {

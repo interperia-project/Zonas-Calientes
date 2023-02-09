@@ -10,7 +10,7 @@ load_dotenv(".env")
 
 
 def app() -> FastAPI:
-    Logger.setup_logger(f"Analityc component {getenv('EXECUTION_ENV')}")
+    Logger.setup_logger()
     return ApiRestManager.setup()
 
 if __name__ == "__main__":  

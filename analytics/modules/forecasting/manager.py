@@ -28,7 +28,7 @@ class TimeForecastingManager(Manager):
         process_function = execution_parameters.get("process_function")
         assert hasattr(cls, process_function), "Process not defined"
 
-        Logger.put_log(f"::::.....:::: Time Forecasting ::::.....::::")
+        Logger.log(f"::::.....:::: Time Forecasting ::::.....::::")
         return getattr(cls, process_function)()
 
     @classmethod
@@ -43,7 +43,7 @@ class TimeForecastingManager(Manager):
         """
         
         random.set_seed(7)
-        Logger.put_log("* Performing Data extraction")
+        Logger.log("* Performing Data extraction")
         json_content = cls._execution_parameters.get("json_content")
         cluster_id = json_content[0].get("idHexagono").get("$oid")
         data = ForecastingExtractor.extract_training_data(json_content)
@@ -56,22 +56,22 @@ class TimeForecastingManager(Manager):
         training_size = best_parameters.get("training_size")
         epochs = 100
         
-        Logger.put_log("* Setting neuronal network")
+        Logger.log("* Setting neuronal network")
         ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
 
-        Logger.put_log("* Preprocesing data")
+        Logger.log("* Preprocesing data")
         training_data = ForecastingTrainer.preprocessing(data, look_back, training_size)
 
-        Logger.put_log("* Performing training process")
+        Logger.log("* Performing training process")
         fitting_result = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
         
         if fitting_result.get("status") == "success":
-            Logger.put_log(f"Scores {fitting_result.get('scores')}")
-            Logger.put_log(f"RMSE {fitting_result.get('rmse')}")
-            Logger.put_log(f"Next_input_vector {type(fitting_result.get('next_input_vector'))}")
+            Logger.log(f"Scores {fitting_result.get('scores')}")
+            Logger.log(f"RMSE {fitting_result.get('rmse')}")
+            Logger.log(f"Next_input_vector {type(fitting_result.get('next_input_vector'))}")
 
             # ::::::......::: Load data in a Firebase bucket :::......::::::
-            Logger.put_log("* Loading training model in bucket")
+            Logger.log("* Loading training model in bucket")
 
             models= {
                 "model": ForecastingTrainer.get_model(),
@@ -82,7 +82,7 @@ class TimeForecastingManager(Manager):
             save_scaler_status = save_models_result.get("scaler").get("status")
             
             if  save_model_status == "success" and save_scaler_status == "success":
-                Logger.put_log("** Model was saved sucessfully")
+                Logger.log("** Model was saved sucessfully")
                 result = {
                     "status": "success",
                     "model_remote_path": save_models_result.get("model").get("remote_path"),
@@ -90,8 +90,8 @@ class TimeForecastingManager(Manager):
                     "next_input_vector": fitting_result.get("next_input_vector").tolist()
                 }
             else:
-                Logger.put_log(f"** Error saving models")
-                Logger.put_log(dumps(save_models_result, indent=4))
+                Logger.log(f"** Error saving models")
+                Logger.log(dumps(save_models_result, indent=4))
                 result = save_models_result
     
         else:

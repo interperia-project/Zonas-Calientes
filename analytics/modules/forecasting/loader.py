@@ -11,7 +11,7 @@ class ForecastingLoader:
     @classmethod
     def save_models_in_bucket(cls, cluster_id:str, models: dict) -> dict:
         firebase_manager = FireBaseClient("interperia")
-        Logger.put_log("* Loading data in firebase storage service")
+        Logger.log("* Loading data in firebase storage service")
         results = {}
         for name, model_object in models.items():
             with TemporaryDirectory() as tempdir:
