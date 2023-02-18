@@ -1,10 +1,12 @@
 from logging.config import dictConfig
-from logging import getLogger, Logger as BuiltInLogger, INFO
+from logging import getLogger, INFO
 from config.settings import LOGGING_SETTINGS
 from json import dumps
 
 class Logger:
-    _logger: BuiltInLogger = None
+    """Use this class to log message according with the priority lelve
+    """
+    _logger = None
 
     @classmethod
     def setup_logger(cls, log_name: str = "general_logger"):

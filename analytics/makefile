@@ -11,8 +11,13 @@ clean-venv:
 
 uninstall:
 	pipenv --rm
+
 install:
+	pip install pipenv
 	pipenv install
+	pipenv shell
 
 install-local:
 	pipenv install --dev
+	pipenv install
+	pipenv shell

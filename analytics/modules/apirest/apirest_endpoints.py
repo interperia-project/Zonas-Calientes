@@ -1,5 +1,5 @@
-from utils.utility_functions import json_message
 from fastapi import Request
+from utils.utility_functions import json_message
 from modules.logs.loggers import Logger
 from modules.forecasting.manager import TimeForecastingManager
 
@@ -10,7 +10,7 @@ class AnalyticEndPoints:
         return json_message("APIREST is working...")
 
     @classmethod
-    async def _forecasting_endpoint(cls, request: Request) -> dict:
+    async def _build_predictive_model_endpoint(cls, request: Request) -> dict:
         """
         This method is used to build a predictive model with historical data from a single cluster
         The data will be sent in a post request with the following format:
@@ -42,6 +42,25 @@ class AnalyticEndPoints:
         
         result = TimeForecastingManager.perform_process(execution_parameters)
         return result
+    
+    
+    @classmethod
+    async def _prediction_endpoint(cls, request: Request) -> dict:
+        """_summary_
+
+        :param request: _description_
+        :type request: Request
+        :return: _description_
+        :rtype: dict
+        """
+        execution_parameters = {
+            "process_function": "perform_pediction",
+            "json_content": await request.json()
+        }
+        
+        result = TimeForecastingManager.perform_process(execution_parameters)
+        return result
+        
 
     @classmethod
     async def _test_endpoint(cls, request: Request):
@@ -51,18 +70,6 @@ class AnalyticEndPoints:
             "method": request.method,
         } 
         return message
-
-    @classmethod
-    async def _forecasting_test_endpoint(cls, request: Request) -> dict:
-        """
-        This method will be used to test predictive models by obtaining data directly from the database. Thus,
-        the data will not be obtained from a post-type request, but from a connection to the databases.
-        :param request: json with information about what database will be used and which cluster
-        :type request: Request
-        :return: _description_
-        :rtype: dict
-        """
-        pass
 
     # ::::::......:::::: Getter Methods ::::::......::::::
     @classmethod
@@ -74,10 +81,19 @@ class AnalyticEndPoints:
         return params
 
     @classmethod
-    def get_forecasting_endpoint(cls):
+    def get_build_predictive_model_endpoint(cls):
         params = {
-            "path": "/forecasting",
-            "endpoint": cls._forecasting_endpoint,
+            "path": "/build_predictive_model",
+            "endpoint": cls._build_predictive_model_endpoint,
+            "methods": ["POST"],
+        }
+        return params
+    
+    @classmethod
+    def get_prediction_endpoint(cls):
+        params = {
+            "path": "/prediction",
+            "endpoint": cls._prediction_endpoint,
             "methods": ["POST"],
         }
         return params

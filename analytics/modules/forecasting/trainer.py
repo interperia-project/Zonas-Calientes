@@ -1,7 +1,6 @@
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from keras.callbacks import EarlyStopping
-import matplotlib.pyplot as plt
 from pandas import DataFrame
 from numpy import reshape, array, sqrt
 from sklearn.preprocessing import MinMaxScaler
@@ -20,8 +19,8 @@ class ForecastingTrainer:
         units: int,
         look_back: int,
         activation: str = "tanh",
-        loss: str = "mean_squared_error", #mae
-        metrics: list = ["mse", "mae"], #Use r2_score from keras as well https://stackoverflow.com/questions/45250100/kerasregressor-coefficient-of-determination-r2-score
+        loss: str = "mean_squared_error",
+        metrics: list = ["mse", "mae"],
     ):
         cls._model = Sequential()
         cls._model.add(LSTM(units, input_shape=(1, look_back), activation=activation))
@@ -172,7 +171,7 @@ class ForecastingTrainer:
             for units in units_array:
                 for batch_size in batch_size_array:
                     
-                    Logger.log(f"* Setting neuronal network")
+                    Logger.log("* Setting neuronal network")
                     ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
 
                     Logger.log("* Preprocesing data")
@@ -180,6 +179,7 @@ class ForecastingTrainer:
 
                     Logger.log("* Performing training process")
                     results = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
+                    print (results)
                     
                     scores.append(results.get("scores")[1])
                     parameters[iteration] = {
@@ -198,21 +198,3 @@ class ForecastingTrainer:
         
         return best_parameters
         
-    
-    @staticmethod
-    def plot_result(training_results: dict, test_results: dict):
-        plt.figure(figsize=(20,10))
-        plt.subplot(1,2,1)
-        plt.title("Training data")
-        plt.plot (training_results.get("prediction"),"o--", label = "Prediction")
-        plt.plot(training_results.get("original_data")[0],"x--", label = "original")
-        plt.legend()
-        plt.grid()
-        
-        plt.subplot(1,2,2)
-        plt.title("Test data")
-        plt.plot (test_results.get("prediction"),"o--", label = "Prediction")
-        plt.plot(test_results.get("original_data")[0],"x--", label = "Original")
-        plt.legend()
-        plt.grid()
-        plt.show()
