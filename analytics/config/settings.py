@@ -36,7 +36,7 @@ FIREBASE_CONFIGS = {
     "interperia": {
         "access_keys": "config/firebase_keys/interperia_access_keys.json",
         "bucket_name": "interperia-test.appspot.com",
-        "models_save_folder": "training_models"
+        "saving_folder": "training_models"
         }
 }
 

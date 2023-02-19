@@ -54,7 +54,7 @@ class AnalyticEndPoints:
         :rtype: dict
         """
         execution_parameters = {
-            "process_function": "perform_pediction",
+            "process_function": "perform_prediction",
             "json_content": await request.json()
         }
         
@@ -92,7 +92,7 @@ class AnalyticEndPoints:
     @classmethod
     def get_prediction_endpoint(cls):
         params = {
-            "path": "/prediction",
+            "path": "/perform_prediction",
             "endpoint": cls._prediction_endpoint,
             "methods": ["POST"],
         }

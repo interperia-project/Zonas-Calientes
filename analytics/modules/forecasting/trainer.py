@@ -6,7 +6,7 @@ from numpy import reshape, array, sqrt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from modules.logs.loggers import Logger
-from numpy import arange, append
+from numpy import arange, append, shape
 
 
 class ForecastingTrainer:
@@ -33,7 +33,7 @@ class ForecastingTrainer:
         another for testing
         :param data: dataframe with the data
         :type data: DataFrame
-        :param look_back: _description_
+        :param look_back: analysis windows size (sample size)
         :type look_back: int
         :param training_len: fraction of the data to be used on the training stage
         :type training_len: float
@@ -85,6 +85,7 @@ class ForecastingTrainer:
 
             train_predict = cls._model.predict(data.get("training_dataset").get("x"), verbose=verbose)
             test_predict = cls._model.predict(data.get("test_dataset").get("x"), verbose=verbose)
+            print(shape(data.get("test_dataset").get("x")))
             
             # invert predictions
             training_results = {
@@ -92,11 +93,13 @@ class ForecastingTrainer:
                 "original_data": cls._scaler.inverse_transform([data.get("training_dataset").get("y")])
             }
             
+            
             testing_results  = {
                 "prediction": cls._scaler.inverse_transform(test_predict),
                 "original_data": cls._scaler.inverse_transform([data.get("test_dataset").get("y")])
             }
             
+            # TODO: this data mus be inversed transformed in order to use the scaler in the predictor function?
             # Vector that will be used to perform the next prediction
             next_input_vector =  append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
             
@@ -179,7 +182,6 @@ class ForecastingTrainer:
 
                     Logger.log("* Performing training process")
                     results = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
-                    print (results)
                     
                     scores.append(results.get("scores")[1])
                     parameters[iteration] = {

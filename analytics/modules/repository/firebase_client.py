@@ -1,6 +1,5 @@
 from firebase_admin import initialize_app, storage, get_app
 from firebase_admin import credentials
-from os import getenv
 from config.settings import FIREBASE_CONFIGS
 
 
@@ -28,7 +27,8 @@ class FireBaseClient:
         }
         return cred, bucket
 
-    def save_in_bucket(self, local_path: str, remote_path: str):
+    @staticmethod
+    def save_in_bucket(local_path: str, remote_path: str):
         """Save method can be use to load files in the firebase bucket.
         This method allows to load files saved locally, using the path, or ussing a
         buffer created with a StringIO object
@@ -48,8 +48,9 @@ class FireBaseClient:
 
         except Exception as e:
             return {"status": "fail", "message": e}
-
-    def download_file(self, remote_path: str, local_path: str):
+        
+    @staticmethod
+    def download_file(remote_path: str, local_path: str):
         """Function used to download a file from a firebase bucket
         :param remote_path: Path in the Firebase bucket where the file is saved
         :type remote_path: str

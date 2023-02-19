@@ -4,10 +4,11 @@ from fastapi.responses import JSONResponse
 from interfaces.manager import Manager
 from tensorflow import random
 
+from modules.logs.loggers import Logger
 from modules.forecasting.extractor import ForecastingExtractor
 from modules.forecasting.loader import ForecastingLoader
 from modules.forecasting.trainer import ForecastingTrainer
-from modules.logs.loggers import Logger
+
 
 
 class TimeForecastingManager(Manager):
@@ -48,7 +49,7 @@ class TimeForecastingManager(Manager):
         Logger.log("* Performing Data extraction")
         json_content = cls._execution_parameters.get("json_content")
         cluster_id = json_content[0].get("idHexagono").get("$oid")
-        data = ForecastingExtractor.extract_training_data(json_content)
+        data =  ForecastingExtractor.extract_training_data(json_content)
         
         response = {}
         
@@ -83,7 +84,7 @@ class TimeForecastingManager(Manager):
                     "scaler": ForecastingTrainer.get_scaler(),
                 }
                 # TODO: Save models and scaler in a separed folder by cluster id
-                save_models_result = ForecastingLoader.save_models_in_bucket(cluster_id, models)
+                save_models_result = ForecastingLoader.save_models_in_bucket(cluster_id, models, f"interval_{i}")
                 save_model_status = save_models_result.get("model").get("status")
                 save_scaler_status = save_models_result.get("scaler").get("status")
 
@@ -104,7 +105,7 @@ class TimeForecastingManager(Manager):
             else:
                 response [i] = fitting_result
 
-        return JSONResponse(result)
+        return JSONResponse(response)
 
 
     @classmethod
@@ -116,3 +117,11 @@ class TimeForecastingManager(Manager):
         :rtype: dict
         """
         Logger.log("::::.....:::: Performing prediction ::::.....::::")
+        json_content = cls._execution_parameters.get("json_content")
+        remote_path = json_content.get("path")
+        training_model = ForecastingExtractor.get_models_from_firebase(remote_path)
+        
+        
+        
+        
+            
