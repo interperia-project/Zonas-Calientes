@@ -1,6 +1,5 @@
-from firebase_admin import initialize_app, storage, get_app
-from firebase_admin import credentials
 from config.settings import FIREBASE_CONFIGS
+from firebase_admin import credentials, get_app, initialize_app, storage
 
 
 class FireBaseClient:
@@ -8,8 +7,9 @@ class FireBaseClient:
         cred, bucket = self._get_configs(project_name)
         try:
             self.self._firebase_client = initialize_app(cred, bucket)
-        except:
+        except Exception:
             self._firebase_client = get_app()
+            
 
     def _get_configs(self, project_name: str):
         """This function is used get the Firebase credentials and the bucket from project settings
@@ -43,26 +43,26 @@ class FireBaseClient:
         try:
             bucket = storage.bucket()
             blob = bucket.blob(remote_path)
-            blob.upload_from_string(local_path)
-            return {"status": "success", "remote_path": remote_path}
+            blob.upload_from_file(local_path)
+            return {"status": True, "remote_path": remote_path}
 
         except Exception as e:
-            return {"status": "fail", "message": e}
+            return {"status": False, "message": e}
         
     @staticmethod
-    def download_file(remote_path: str, local_path: str):
+    def download_file(remote_path: str, file_object: str):
         """Function used to download a file from a firebase bucket
         :param remote_path: Path in the Firebase bucket where the file is saved
         :type remote_path: str
-        :param local_path: Path where the file will be saved
-        :type local_path: str
+        :param file_object: File object with the path where the file will be saved (temporal preferred)
+        :type file_object: str
         :return: success message or exception message
         :rtype: str or Exception
         """
         try:
             bucket = storage.bucket()
             blob = bucket.blob(remote_path)
-            blob.download_to_filename(local_path)
-            return "success"
+            blob.download_to_filename(file_object)
+            return {"status": True}
         except Exception as e:
-            return e
+            return {"status": False, "message": e}

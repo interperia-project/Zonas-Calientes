@@ -1,36 +1,42 @@
-from modules.logs.loggers import Logger
-from modules.repository.firebase_client import FireBaseClient
-from keras.models import Sequential
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile
+
 from config.settings import FIREBASE_CONFIGS
 from joblib import dump
+
+from modules.repository.firebase_client import FireBaseClient
 
 
 class ForecastingLoader:
     @classmethod
     def save_models_in_bucket(cls, cluster_id: str, models: dict, interval: str) -> dict:
-        """_summary_
-
-        :param cluster_id: _description_
+        """This function can be used to save in firebase bucket (or other), a file  with the training model
+        and with the scaler object
+        :param cluster_id: name of the cluster id given in the json content
         :type cluster_id: str
-        :param models: _description_
+        :param models: distionary with the traing model and the scaller in the following format:
+                        {
+                            "model": training_model_object,
+                            "scaler: scaler_objet
+                        }
         :type models: dict
-        :param interval: _description_
+        :param interval: This parameter indicate which time interval of the dataframe is being save
         :type interval: str
-        :return: _description_
+        :return: operation status
         :rtype: dict
         """
         firebase_manager = FireBaseClient("interperia")
-        Logger.log("* Loading data in firebase storage service")
+        base_folder = f"{FIREBASE_CONFIGS.get('interperia').get('saving_folder')}"
         results = {}
+        
         for name, model_object in models.items():
-            with TemporaryDirectory() as tempdir:
-                base_folder = f"{FIREBASE_CONFIGS.get('interperia').get('saving_folder')}"
-                remote_path = f"{base_folder}/{cluster_id}/{name}_{interval}.h5"
-                temp_path = f"{tempdir}/{name}_id_{cluster_id}.h5"
-                if isinstance(model_object, Sequential):
-                    model_object.save(temp_path)
+            sufix = ".h5" if name == "model" else ".plk"
+            remote_path = f"{base_folder}/{cluster_id}/{name}_{interval}{sufix}"
+
+            with NamedTemporaryFile(suffix=sufix, delete=False) as tempfile:
+                if name == "model":
+                    model_object.save(tempfile.name)
                 else:
-                    dump(model_object, temp_path)
-            results[name] = firebase_manager.save_in_bucket(temp_path, remote_path)
+                    dump(model_object, tempfile.name)       
+                tempfile.seek(0)   
+                results[name] = firebase_manager.save_in_bucket(tempfile, remote_path)  
         return results
