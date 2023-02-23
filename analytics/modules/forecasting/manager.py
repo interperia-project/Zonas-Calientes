@@ -8,7 +8,7 @@ from modules.logs.loggers import Logger
 from modules.forecasting.extractor import ForecastingExtractor
 from modules.forecasting.loader import ForecastingLoader
 from modules.forecasting.trainer import ForecastingTrainer
-
+from pandas import read_csv
 
 
 class TimeForecastingManager(Manager):
@@ -49,12 +49,12 @@ class TimeForecastingManager(Manager):
         Logger.log("* Performing Data extraction")
         json_content = cls._execution_parameters.get("json_content")
         cluster_id = json_content[0].get("idHexagono").get("$oid")
-        data =  ForecastingExtractor.extract_training_data(json_content)
+        data = read_csv("/Users/andersonlopera/Desktop/LSTM/airline-passengers.csv", usecols=[1]) # ForecastingExtractor.extract_training_data(json_content)
         
-        response = {}
+        response = []
         
-        for i in range(len(data.axes[1])):
-            best_parameters = ForecastingTrainer.search_grid(data[[f"interval_{i}"]])
+        for i in range(len(data.axes[1])+2):
+            best_parameters = {'look_back': 3, 'units': 100, 'batch_size': 4, 'training_size': 0.7} # ForecastingTrainer.search_grid(data[[f"interval_{i}"]])
 
             look_back = best_parameters.get("look_back")
             units = best_parameters.get("units")
@@ -71,10 +71,10 @@ class TimeForecastingManager(Manager):
             Logger.log("* Performing training process")
             fitting_result = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
 
-            if fitting_result.get("status") == "success":
+            if fitting_result.get("status"):
                 Logger.log(f"Scores {fitting_result.get('scores')}")
                 Logger.log(f"RMSE {fitting_result.get('rmse')}")
-                Logger.log(f"Next_input_vector {type(fitting_result.get('next_input_vector'))}")
+                Logger.log(f"Next_input_vector {fitting_result.get('next_input_vector')}")
 
                 # ::::::......::: Load data in a Firebase bucket :::......::::::
                 Logger.log("* Loading training model in bucket")
@@ -83,27 +83,28 @@ class TimeForecastingManager(Manager):
                     "model": ForecastingTrainer.get_model(),
                     "scaler": ForecastingTrainer.get_scaler(),
                 }
-                # TODO: Save models and scaler in a separed folder by cluster id
+
                 save_models_result = ForecastingLoader.save_models_in_bucket(cluster_id, models, f"interval_{i}")
                 save_model_status = save_models_result.get("model").get("status")
                 save_scaler_status = save_models_result.get("scaler").get("status")
 
-                if save_model_status == "success" and save_scaler_status == "success":
+                if save_model_status and save_scaler_status:
                     Logger.log("** Model was saved sucessfully")
                     result = {
-                        "status": "success",
+                        "status": True,
+                        "idHexagono": cluster_id,
                         "model_remote_path": save_models_result.get("model").get("remote_path"),
                         "scaler_remote_path": save_models_result.get("scaler").get("remote_path"),
                         "next_input_vector": fitting_result.get("next_input_vector").tolist(),
                     }
-                    response [i]=result
+                    response.append(result)
                 else:
                     Logger.log("** Error saving models")
                     Logger.log(dumps(save_models_result, indent=4))
                     result = save_models_result
 
             else:
-                response [i] = fitting_result
+                response.append(fitting_result)
 
         return JSONResponse(response)
 
@@ -118,8 +119,14 @@ class TimeForecastingManager(Manager):
         """
         Logger.log("::::.....:::: Performing prediction ::::.....::::")
         json_content = cls._execution_parameters.get("json_content")
-        remote_path = json_content.get("path")
-        training_model = ForecastingExtractor.get_models_from_firebase(remote_path)
+        
+        for parameter in json_content:
+            print(parameter.get("scaler_remote_path"))
+            ForecastingExtractor.get_model_from_firebase(parameter.get("scaler_remote_path"))
+            ForecastingExtractor.get_model_from_firebase(parameter.get("model_remote_path"))
+
+        
+ 
         
         
         
