@@ -3,7 +3,6 @@ from os import getcwd, getenv
 from os.path import join, dirname
 from utils.settings_yaml import load_settings
 
-
 # Loading .env enviroment variables
 load_dotenv(join(dirname(getcwd()), ".env"))
 
@@ -40,3 +39,6 @@ FIREBASE_CONFIGS = {
         }
 }
 
+MANAGERS = {
+    "TimeForecastingManager": "modules.forecasting.manager"
+}

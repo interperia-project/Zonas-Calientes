@@ -86,6 +86,7 @@ class ForecastingTrainer:
             train_predict = cls._model.predict(data.get("training_dataset").get("x"), verbose=verbose)
             test_predict = cls._model.predict(data.get("test_dataset").get("x"), verbose=verbose)
             
+            
             # invert predictions
             training_results = {
                 "prediction": cls._scaler.inverse_transform(train_predict),
@@ -100,6 +101,8 @@ class ForecastingTrainer:
 
             # Vector that will be used to perform the next prediction
             next_input_vector = append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
+            
+            Logger.log(f"Input vector + prediction {next_input_vector}")
             
             # Getting scores from model evaluation
             scores = cls._model.evaluate(
@@ -127,13 +130,10 @@ class ForecastingTrainer:
             result = {"status": False, "message": e}
             return result
         
-    @classmethod
-    def get_model(cls) -> Sequential:
-        return cls._model
     
     @classmethod
-    def get_scaler(cls) -> MinMaxScaler:
-        return cls._scaler
+    def get_models(cls) ->dict:
+        return {"model": cls._model,"scaler": cls._scaler}
     
     @classmethod
     def _get_rsme(cls, data: dict) -> dict:

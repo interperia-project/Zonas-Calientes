@@ -43,5 +43,5 @@ class ForecastingExtractor:
                 return {"status": False, "message": "Download error"}
             else:
                 model_objet = load_model(temp_file.name) if sufix == ".h5" else load(temp_file.name)              
-        return model_objet
+                return model_objet
         
