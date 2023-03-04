@@ -118,8 +118,50 @@ class TimeForecastingManager(Manager):
         """This method is used to get the prediction of the following point in the time series.
         the json content in the variable 'execution_parameters" must contain the last predicted sample, and the paths
         in firebase bucket where the scalers and models (by time interval) are stored
-        :return: Next point in the time series and the last sample in the time series
+        :return: Prediction for the next value in the time series and the next_input vector
         :rtype: dict
+        
+        Format for inpunt json data: 
+            {
+                "cluster_id": "example_id",
+                "fields": [
+                    {
+                        "interval": 0,
+                        "model_remote_path": "firebase_model_path_interval_0.j5",
+                        "scaler_remote_path": "firabese_scaler_path_interval_0.plk",
+                        "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    {
+                        "interval": 2,
+                        "model_remote_path": "firebase_model_path_interval_1.j5",
+                        "scaler_remote_path": "firabese_scaler_path_interval_1.plk",
+                        "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    .
+                    .
+                    .
+                ]
+            }
+
+        Format for response json:    
+            {
+                "cluster_id": "cluster_id",
+                "results": [
+                    {
+                    "interval": 0,
+                    "prediction": value after apply inverse_transform from scaler object
+                    "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    {
+                    "interval": 1,
+                    "prediction": value after apply inverse_transform from scaler object
+                    "next_input_vector":[value_1, value_2, value_3...]
+                    }
+                    .
+                    .
+                    .
+                ]
+            }
         """
         Logger.log("::::.....:::: Performing prediction ::::.....::::")
         json_content = cls._execution_parameters.get("json_content")
@@ -151,6 +193,6 @@ class TimeForecastingManager(Manager):
 
         return  {
             "cluster_id": json_content.get("cluster_id"),
-            "predictions": operation_result
+            "results": operation_result
         }
         
