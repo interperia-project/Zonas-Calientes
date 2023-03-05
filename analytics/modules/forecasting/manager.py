@@ -49,19 +49,12 @@ class TimeForecastingManager(Manager):
         Logger.log("* Performing Data extraction")
         json_content = cls._execution_parameters.get("json_content")
         cluster_id = json_content[0].get("idHexagono").get("$oid")
-        data = read_csv(
-            "/Users/andersonlopera/Desktop/LSTM/airline-passengers.csv", usecols=[1]
-        )  # ForecastingExtractor.extract_training_data(json_content)
+        data = ForecastingExtractor.extract_training_data(json_content)
 
         response = []
 
-        for i in range(len(data.axes[1]) + 2):
-            best_parameters = {
-                "look_back": 3,
-                "units": 100,
-                "batch_size": 4,
-                "training_size": 0.7,
-            }  # ForecastingTrainer.search_grid(data[[f"interval_{i}"]])
+        for i in range(len(data.axes[1])):
+            best_parameters = ForecastingTrainer.search_grid(data[[f"interval_{i}"]])
 
             look_back = best_parameters.get("look_back")
             units = best_parameters.get("units")
