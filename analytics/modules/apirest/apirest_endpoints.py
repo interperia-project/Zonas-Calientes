@@ -55,9 +55,7 @@ class AnalyticEndPoints:
         :rtype: dict
         """
         execution_parameters = {"process_function": "perform_prediction", "json_content": await request.json()}
-        operation_result = TimeForecastingManager.perform_process(execution_parameters)
-        print(operation_result) 
-        
+        operation_result = TimeForecastingManager.perform_process(execution_parameters) 
         return JSONResponse(operation_result)
 
     @classmethod
