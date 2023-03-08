@@ -1,23 +1,20 @@
-clean-pyc:
+clean-project:
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 	find . -name '*__pycache__*' -exec rm -fr {} +
 
-clean: clean-pyc
-
-clean-venv:
+uninstall-packages:
 	pipenv uninstall --all
 
-uninstall:
-	pipenv --rm
-
-install:
-	pip install pipenv
-	pipenv install
-	pipenv shell
-
 install-local:
+	pip install --upgrade pip
+	pip install pipenv
 	pipenv install --dev
-	pipenv install
 	pipenv shell
+
+uninstall-local:
+	pipenv exit
+	pipenv --rm
+	pip uninstall pipenv
+

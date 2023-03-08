@@ -1,14 +1,14 @@
 from json import dumps
 
-from fastapi.responses import JSONResponse
 from interfaces.manager import Manager
+from pandas import read_csv
 from tensorflow import random
 
-from modules.logs.loggers import Logger
 from modules.forecasting.extractor import ForecastingExtractor
 from modules.forecasting.loader import ForecastingLoader
 from modules.forecasting.trainer import ForecastingTrainer
-
+from modules.logs.loggers import Logger
+from numpy import reshape, append
 
 
 class TimeForecastingManager(Manager):
@@ -44,15 +44,15 @@ class TimeForecastingManager(Manager):
         """
 
         Logger.log("::::.....:::: Building a predictive model::::.....::::")
-        
+
         random.set_seed(7)
         Logger.log("* Performing Data extraction")
         json_content = cls._execution_parameters.get("json_content")
         cluster_id = json_content[0].get("idHexagono").get("$oid")
-        data =  ForecastingExtractor.extract_training_data(json_content)
-        
-        response = {}
-        
+        data = ForecastingExtractor.extract_training_data(json_content)
+
+        response = []
+
         for i in range(len(data.axes[1])):
             best_parameters = ForecastingTrainer.search_grid(data[[f"interval_{i}"]])
 
@@ -71,57 +71,121 @@ class TimeForecastingManager(Manager):
             Logger.log("* Performing training process")
             fitting_result = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
 
-            if fitting_result.get("status") == "success":
+            if fitting_result.get("status"):
                 Logger.log(f"Scores {fitting_result.get('scores')}")
                 Logger.log(f"RMSE {fitting_result.get('rmse')}")
-                Logger.log(f"Next_input_vector {type(fitting_result.get('next_input_vector'))}")
+                Logger.log(f"Next_input_vector {fitting_result.get('next_input_vector')}")
 
                 # ::::::......::: Load data in a Firebase bucket :::......::::::
                 Logger.log("* Loading training model in bucket")
-
-                models = {
-                    "model": ForecastingTrainer.get_model(),
-                    "scaler": ForecastingTrainer.get_scaler(),
-                }
-                # TODO: Save models and scaler in a separed folder by cluster id
+                models = ForecastingTrainer.get_models()
                 save_models_result = ForecastingLoader.save_models_in_bucket(cluster_id, models, f"interval_{i}")
                 save_model_status = save_models_result.get("model").get("status")
                 save_scaler_status = save_models_result.get("scaler").get("status")
 
-                if save_model_status == "success" and save_scaler_status == "success":
+                if save_model_status and save_scaler_status:
                     Logger.log("** Model was saved sucessfully")
                     result = {
-                        "status": "success",
+                        "status": True,
+                        "interval": i,
                         "model_remote_path": save_models_result.get("model").get("remote_path"),
                         "scaler_remote_path": save_models_result.get("scaler").get("remote_path"),
                         "next_input_vector": fitting_result.get("next_input_vector").tolist(),
                     }
-                    response [i]=result
+                    response.append(result)
                 else:
                     Logger.log("** Error saving models")
                     Logger.log(dumps(save_models_result, indent=4))
                     result = save_models_result
 
             else:
-                response [i] = fitting_result
-
-        return JSONResponse(response)
-
+                response.append(fitting_result)
+        
+        return {
+            "cluster_id": cluster_id,
+            "fields": response
+        }
 
     @classmethod
     def perform_prediction(cls):
         """This method is used to get the prediction of the following point in the time series.
         the json content in the variable 'execution_parameters" must contain the last predicted sample, and the paths
         in firebase bucket where the scalers and models (by time interval) are stored
-        :return: Next point in the time series and the last sample in the time series
+        :return: Prediction for the next value in the time series and the next_input vector
         :rtype: dict
+        
+        Format for inpunt json data: 
+            {
+                "cluster_id": "example_id",
+                "fields": [
+                    {
+                        "interval": 0,
+                        "model_remote_path": "firebase_model_path_interval_0.j5",
+                        "scaler_remote_path": "firabese_scaler_path_interval_0.plk",
+                        "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    {
+                        "interval": 2,
+                        "model_remote_path": "firebase_model_path_interval_1.j5",
+                        "scaler_remote_path": "firabese_scaler_path_interval_1.plk",
+                        "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    .
+                    .
+                    .
+                ]
+            }
+
+        Format for response json:    
+            {
+                "cluster_id": "cluster_id",
+                "results": [
+                    {
+                    "interval": 0,
+                    "prediction": value after apply inverse_transform from scaler object
+                    "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    {
+                    "interval": 1,
+                    "prediction": value after apply inverse_transform from scaler object
+                    "next_input_vector":[value_1, value_2, value_3...]
+                    }
+                    .
+                    .
+                    .
+                ]
+            }
         """
         Logger.log("::::.....:::: Performing prediction ::::.....::::")
         json_content = cls._execution_parameters.get("json_content")
-        remote_path = json_content.get("path")
-        training_model = ForecastingExtractor.get_models_from_firebase(remote_path)
+        operation_result = []
+
+        for field in json_content.get("fields"):
+            try:
+                input_vector = field.get("next_input_vector")
+                input_vector = reshape(input_vector, (1,1,len(input_vector)))
+                
+                Logger.log("* Getting models from Firebase")
+                # TODO: Save model in local if not exist (?)
+                scaler = ForecastingExtractor.get_model_from_firebase(field.get("scaler_remote_path"))
+                model = ForecastingExtractor.get_model_from_firebase(field.get("model_remote_path"))
+                
+                Logger.log(f"Performing prediction for interval {field.get('interval')}")
+                model_prediction = model.predict(input_vector)
+                real_prediction_value = scaler.inverse_transform(model_prediction).reshape(-1)
+                next_input_vector = append(field.get("next_input_vector"), reshape(model_prediction,-1))
+
+                result = {
+                    "interval": field.get('interval'),
+                    "prediction": real_prediction_value.tolist()[0],
+                    "next_input_vector": next_input_vector[1:].tolist()
+                }
+                operation_result.append(result)
+            except  Exception as e:
+                Logger.log(f"Exception -> {e}")
+
+        return  {
+            "cluster_id": json_content.get("cluster_id"),
+            "results": operation_result
+        }
         
-        
-        
-        
-            

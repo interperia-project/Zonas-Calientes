@@ -6,7 +6,7 @@ from numpy import reshape, array, sqrt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from modules.logs.loggers import Logger
-from numpy import arange, append, shape
+from numpy import arange, append
 
 
 class ForecastingTrainer:
@@ -72,7 +72,7 @@ class ForecastingTrainer:
     @classmethod
     def fit_model(cls, data: dict, epochs: int, batch_size: int, verbose=0, patience=10) -> dict:
         try:
-            history = cls._model.fit(
+            cls._model.fit(
                 data.get("training_dataset").get("x"),
                 data.get("training_dataset").get("y"),
                 epochs=epochs,
@@ -85,7 +85,7 @@ class ForecastingTrainer:
 
             train_predict = cls._model.predict(data.get("training_dataset").get("x"), verbose=verbose)
             test_predict = cls._model.predict(data.get("test_dataset").get("x"), verbose=verbose)
-            print(shape(data.get("test_dataset").get("x")))
+            
             
             # invert predictions
             training_results = {
@@ -93,15 +93,16 @@ class ForecastingTrainer:
                 "original_data": cls._scaler.inverse_transform([data.get("training_dataset").get("y")])
             }
             
-            
+            # invert predictions
             testing_results  = {
                 "prediction": cls._scaler.inverse_transform(test_predict),
                 "original_data": cls._scaler.inverse_transform([data.get("test_dataset").get("y")])
             }
-            
-            # TODO: this data mus be inversed transformed in order to use the scaler in the predictor function?
+
             # Vector that will be used to perform the next prediction
-            next_input_vector =  append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
+            next_input_vector = append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
+            
+            Logger.log(f"Input vector + prediction {next_input_vector}")
             
             # Getting scores from model evaluation
             scores = cls._model.evaluate(
@@ -116,8 +117,7 @@ class ForecastingTrainer:
             test_rmse = cls._get_rsme(testing_results)
             
             result = {
-                "status": "success",
-                "history": history,
+                "status": True,
                 "scores": scores,
                 "training_results": training_results,
                 "test_results": testing_results,
@@ -127,16 +127,13 @@ class ForecastingTrainer:
             return result
 
         except Exception as e:
-            result = {"status": "fail", "message": e}
+            result = {"status": False, "message": e}
             return result
         
-    @classmethod
-    def get_model(cls) -> Sequential:
-        return cls._model
     
     @classmethod
-    def get_scaler(cls) -> MinMaxScaler:
-        return cls._scaler
+    def get_models(cls) ->dict:
+        return {"model": cls._model,"scaler": cls._scaler}
     
     @classmethod
     def _get_rsme(cls, data: dict) -> dict:
