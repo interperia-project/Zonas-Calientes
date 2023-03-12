@@ -15,15 +15,17 @@ LOGGING_SETTINGS = load_settings("config")
 APIREST_HOST = getenv("ANALYTICS_HOST_NAME")
 APIREST_PORT = getenv("ANALYTICS_HOST_PORT")
 BACKEND_PORT = getenv("BACKEND_HOST_PORT")
-ALLOWED_ORIGINS = {
-    f"http://{APIREST_HOST}",
-    f"http://{BACKEND_PORT}:8080"
-    f"http://{APIREST_HOST}:5000",
-}
+
+
+# ALLOWED_ORIGINS = {
+#     f"http://{APIREST_HOST}",
+#     f"http://{BACKEND_PORT}:8080"
+#     f"http://{APIREST_HOST}:5000",
+# }
 
 
 APIREST_CONFIGURATIONS = {
-    "allow_origins": ALLOWED_ORIGINS,
+    "allow_origins": ["*"],
     "allow_credentials": True,
     "allow_methods": ["*"],
     "allow_headers": ["*"]

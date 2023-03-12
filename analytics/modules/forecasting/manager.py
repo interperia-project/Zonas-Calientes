@@ -1,7 +1,6 @@
 from json import dumps
 
 from interfaces.manager import Manager
-from pandas import read_csv
 from tensorflow import random
 
 from modules.forecasting.extractor import ForecastingExtractor
