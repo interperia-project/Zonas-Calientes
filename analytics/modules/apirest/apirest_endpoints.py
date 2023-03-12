@@ -12,7 +12,7 @@ class AnalyticEndPoints:
 
     @classmethod
     async def _index_endpoint(cls):
-        message = "Analitycs APIREST is working...Test3"
+        message = "Analitycs APIREST is working...Test4"
         Logger.log(message)
         return json_message(message)
 
