@@ -18,3 +18,7 @@ uninstall-local:
 	pipenv --rm
 	pip uninstall pipenv
 
+rebuild-docker-images:
+	docker-compose down
+	docker-compose build
+	docker image prune -f

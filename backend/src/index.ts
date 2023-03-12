@@ -22,11 +22,11 @@ import documentTypeRoutes from "./routes/documentType";
 
 dotenv.config();
 
-if (!process.env.PORT) {
+if (!process.env.BACKEND_HOST_PORT) {
     process.exit(1);
 }
 
-const port: number = parseInt(process.env.PORT);
+const port: number = parseInt(process.env.BACKEND_HOST_PORT);
 
 const server = new Server(port);
 colors.enable();

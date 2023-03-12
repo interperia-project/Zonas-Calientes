@@ -12,6 +12,20 @@ services:
       - ./analytics:/analytics
     environment:
       ANALYTICS_HOST_NAME: ${ANALYTICS_HOST_NAME}
-      ANALYTICS_CONTAINER_PORR: ${ANALYTICS_CONTAINER_PORT}
+      ANALYTICS_CONTAINER_PORT: ${ANALYTICS_CONTAINER_PORT}
       ANALYTICS_HOST_PORT: ${ANALYTICS_HOST_PORT}
-      
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: backend.Dockerfile
+    container_name: backend
+    ports:
+      - ${BACKEND_CONTAINER_PORT}:${BACKEND_HOST_PORT}
+    volumes:
+      - ./backend:/backend
+    environment:
+      BACKEND_HOST_NAME: ${BACKEND_HOST_NAME}
+      BACKEND_CONTAINER_PORT: ${BACKEND_CONTAINER_PORT}
+      BACKEND_HOST_PORT: ${BACKEND_HOST_PORT}
+      MONGODB_URL: ${MONGODB_URL}
