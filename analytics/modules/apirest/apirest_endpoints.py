@@ -12,8 +12,9 @@ class AnalyticEndPoints:
 
     @classmethod
     async def _index_endpoint(cls):
-        Logger.log("APIREST is working...")
-        return json_message("APIREST is working...")
+        message = "Analitycs APIREST is working.."
+        Logger.log(message)
+        return json_message(message)
 
     @classmethod
     async def _build_predictive_model_endpoint(cls, request: Request) -> dict:
