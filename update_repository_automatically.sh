@@ -20,3 +20,7 @@ if git show-ref --verify --quiet refs/remotes/$REMOTE_NAME/$(git branch --show-c
 else
     echo "Remote branch $(git branch --show-current) does not exist."
 fi
+
+
+# crontab -e
+# * * * * * cd ~/zonas-calientes && ./update_repository_automatically.sh
