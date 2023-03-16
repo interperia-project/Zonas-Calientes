@@ -15,7 +15,7 @@ class ForecastingExtractor:
         Also the dates  without data are fille with 0s (necesary for time series forecasting
         :param json_content: json file with the data to traing the model
         :type json_content: dict
-        :return: Dataframe with as many columns as time intervals in the json content
+        :return: Dataframe with as many columns as time intervals in the json content    
         :rtype: DataFrame
         """
         df = DataFrame(json_content)
