@@ -16,7 +16,7 @@ class ForecastingExtractor:
         :param json_content: json file with the data to traing the model
         :type json_content: dict
         :return: Dataframe with as many columns as time intervals in the json content    
-        :rtype: DataFrame
+        :rtype: DataFrame   
         """
         df = DataFrame(json_content)
         df = df.join(DataFrame(df["cantidad"].tolist()).add_prefix("interval_"))
