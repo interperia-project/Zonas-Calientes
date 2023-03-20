@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from os import getcwd, getenv
 from os.path import join, dirname
 from utils.settings_yaml import load_settings
+from json import loads
 
 # Loading .env enviroment variables
 load_dotenv(join(dirname(getcwd()), ".env"))
@@ -35,8 +36,8 @@ APIREST_CONFIGURATIONS = {
 # ::::::....... Firebase storage service connection configs ......::::::
 FIREBASE_CONFIGS = {
     "interperia": {
-        "access_keys": "config/firebase_keys/interperia_access_keys.json",
-        "bucket_name": "interperia-test.appspot.com",
+        "access_keys": loads(getenv("FIREBASE_ACCESS_KEYS")),
+        "bucket_name": "interperia.appspot.com",
         "saving_folder": "training_models"
         }
 }
