@@ -30,3 +30,20 @@ services:
       BACKEND_CONTAINER_PORT: ${BACKEND_CONTAINER_PORT}
       BACKEND_HOST_PORT: ${BACKEND_HOST_PORT}
       MONGODB_URL: ${MONGODB_URL}
+
+  mongodb:
+    container_name: mongodb
+    image: mongo
+
+  mongorestore:
+    build: 
+      context: ./db
+      dockerfile: db.Dockerfile
+    depends_on:
+      - mongodb 
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+
+
+    
