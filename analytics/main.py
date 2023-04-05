@@ -13,5 +13,5 @@ def app() -> FastAPI:
     return ApiRestManager.setup()
 
 if __name__ == "__main__":  
-    run("main:app", port=int(APIREST_PORT),host=APIREST_HOST, reload=True, factory=True)
+    run("main:app", port=int(APIREST_PORT),host=APIREST_HOST, reload=True, factory=True, workers=4)
  
