@@ -37,7 +37,7 @@ APIREST_CONFIGURATIONS = {
 FIREBASE_CONFIGS = {
     "interperia": {
         "access_keys": loads(getenv("FIREBASE_ACCESS_KEYS")),
-        "bucket_name": "interperia.appspot.com",
+        "bucket_name": "interperia-test.appspot.com",
         "saving_folder": "training_models"
         }
 }

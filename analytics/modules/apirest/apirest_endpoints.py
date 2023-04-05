@@ -5,14 +5,13 @@ from modules.forecasting.manager import TimeForecastingManager
 
 from modules.logs.loggers import Logger
 
+import asyncio
 
 class AnalyticEndPoints:
 
-    _FORECASTING_MANAGER_NAME = "TimeForecastingManager"
-
     @classmethod
     async def _index_endpoint(cls):
-        message = "Analitycs APIREST is working... Developement enviroment"
+        message = "Analitycs APIREST is working..."
         Logger.log(message)
         return json_message(message)
 

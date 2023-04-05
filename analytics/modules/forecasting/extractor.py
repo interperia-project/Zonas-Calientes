@@ -39,9 +39,10 @@ class ForecastingExtractor:
         
         with NamedTemporaryFile(suffix=sufix, delete=False) as temp_file:
             result = firebase_manager.download_file(remote_path, temp_file.name)
+            
             if not result.get("status"):
                 return {"status": False, "message": "Download error"}
-            else:
-                model_objet = load_model(temp_file.name) if sufix == ".h5" else load(temp_file.name)              
-                return model_objet
+            
+            model_objet = load_model(temp_file.name) if sufix == ".h5" else load(temp_file.name)              
+            return model_objet
         
