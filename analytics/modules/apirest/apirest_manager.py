@@ -28,7 +28,6 @@ class ApiRestManager:
         Logger.log("* Adding all endpoints to a router class")
         router = APIRouter()
         router.add_api_route(**AnalyticEndPoints.get_index_endpoint())
-        router.add_api_route(**AnalyticEndPoints.get_test_endpoint())
         router.add_api_route(**AnalyticEndPoints.get_build_predictive_model_endpoint())
         router.add_api_route(**AnalyticEndPoints.get_prediction_endpoint())
         return router

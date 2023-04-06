@@ -9,7 +9,7 @@ handlers:
   console:
     class: logging.StreamHandler
     formatter: plaintext
-    level: DEBUG
+    level: INFO
     stream: ext://sys.stdout
   logfile:
     class: logging.handlers.RotatingFileHandler
