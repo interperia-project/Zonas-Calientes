@@ -24,7 +24,7 @@ class ForecastingTrainer:
     ):
         cls._model = Sequential()
         cls._model.add(LSTM(units, input_shape=(1, look_back), activation=activation))
-        cls._model.add(Dense(1))
+        cls._model.add(Dense(2))
         cls._model.compile(loss=loss, optimizer="adam", metrics=metrics)
         
     @classmethod
