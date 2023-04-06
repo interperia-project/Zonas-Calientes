@@ -24,7 +24,7 @@ class ForecastingTrainer:
     ):
         cls._model = Sequential()
         cls._model.add(LSTM(units, input_shape=(1, look_back), activation=activation))
-        cls._model.add(Dense(1))
+        cls._model.add(Dense(2))
         cls._model.compile(loss=loss, optimizer="adam", metrics=metrics)
         
     @classmethod
@@ -156,9 +156,9 @@ class ForecastingTrainer:
 
         training_size = 0.7
         epochs = 100
-        batch_size_array = [4, 8, 16, 32]
-        look_back_array = arange(3,21, 4)
-        units_array = arange(60, 101, 10)
+        batch_size_array = [16, 32]
+        look_back_array = arange(7,31, 7)
+        units_array = arange(80, 101, 10)
 
         # TODO Improve performance metrics
         Logger.log("Searching the best parameters ...")

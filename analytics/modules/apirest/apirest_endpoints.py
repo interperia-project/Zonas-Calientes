@@ -1,14 +1,20 @@
-from fastapi import Request
+from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
 from utils.utility_functions import json_message
 from modules.forecasting.manager import TimeForecastingManager
-
+from typing import Annotated
 from modules.logs.loggers import Logger
 
-import asyncio
 
 class AnalyticEndPoints:
+    
+    # TODO: using the endpoints class and the add_api_router functio just intruduce and addtional complexity to the code. 
+    # I recomend use a single module and yo use the app decorators
 
+    @staticmethod
+    async def get_body(request: Request):
+        return await request.json()
+    
     @classmethod
     async def _index_endpoint(cls):
         message = "Analitycs APIREST is working..."
@@ -16,7 +22,7 @@ class AnalyticEndPoints:
         return json_message(message)
 
     @classmethod
-    async def _build_predictive_model_endpoint(cls, request: Request) -> dict:
+    def _build_predictive_model_endpoint(cls, json_content: Annotated[dict, Depends(get_body)]) -> dict:
         """
         This method is used to build a predictive model with historical data from a single cluster
         The data will be sent in a post request with the following format:
@@ -40,13 +46,13 @@ class AnalyticEndPoints:
         For example, the first position represent the counts for the interval 00:00 to 00:59, second position
         represent the counts for the interval from 01:00 to 01:59 and continues with the same logic up to 23:59
         """
-
-        execution_parameters = {"process_function": "build_predictive_model", "json_content": await request.json()}
+        Logger.log("Starting trainer")
+        execution_parameters = {"process_function": "build_predictive_model", "json_content": json_content}
         operation_result = TimeForecastingManager.perform_process(execution_parameters)
         return JSONResponse(operation_result)
 
     @classmethod
-    async def _prediction_endpoint(cls, request: Request) -> dict:
+    def _prediction_endpoint(cls, json_content: Annotated[dict, Depends(get_body)]) -> dict:
         """_summary_
 
         :param request: _description_
@@ -54,18 +60,11 @@ class AnalyticEndPoints:
         :return: _description_
         :rtype: dict
         """
-        execution_parameters = {"process_function": "perform_prediction", "json_content": await request.json()}
+        Logger.log("starting predictor")
+        execution_parameters = {"process_function": "perform_prediction", "json_content": json_content}
         operation_result = TimeForecastingManager.perform_process(execution_parameters) 
         return JSONResponse(operation_result)
 
-    @classmethod
-    async def _test_endpoint(cls, request: Request):
-        message = {
-            "message": "Testing apirest",
-            "host": request.client.host,
-            "method": request.method,
-        }
-        return message
 
     # ::::::......:::::: Getter Methods ::::::......::::::
     @classmethod
@@ -87,15 +86,7 @@ class AnalyticEndPoints:
         params = {
             "path": "/perform_prediction",
             "endpoint": cls._prediction_endpoint,
-            "methods": ["POST"],
+            "methods": ["POST"]
         }
         return params
 
-    @classmethod
-    def get_test_endpoint(cls):
-        params = {
-            "path": "/test_endpoint",
-            "endpoint": cls._test_endpoint,
-            "methods": ["GET"],
-        }
-        return params
