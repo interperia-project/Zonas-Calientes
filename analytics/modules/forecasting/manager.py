@@ -46,8 +46,8 @@ class TimeForecastingManager(Manager):
 
         random.set_seed(7)
         Logger.log("* Performing Data extraction")
-        json_content = cls._execution_parameters.get("json_content")
-        cluster_id = json_content[0].get("idHexagono").get("$oid")
+        json_content = cls._execution_parameters.get("json_content").get("data")
+        cluster_id = json_content[0].get("idHexagono")
         data = ForecastingExtractor.extract_training_data(json_content)
 
         response = []
