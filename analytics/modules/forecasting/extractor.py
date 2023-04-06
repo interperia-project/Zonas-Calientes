@@ -20,10 +20,10 @@ class ForecastingExtractor:
         """
         df = DataFrame(json_content)
         df = df.join(DataFrame(df["cantidad"].tolist()).add_prefix("interval_"))
-        df = df.set_index(to_datetime(df["dia"], format="%d/%m/%Y"))
-        df.index = DatetimeIndex(df.index)
+        df = df.set_index(to_datetime(df["dia"], format="%m/%d/%Y"))
+        df.index = DatetimeIndex(df.index) 
         df = df.reindex(date_range(df.index.min(), date.today()), fill_value=0)
-        return df.drop(["cantidad", "idHexagono", "dia"], axis=1)
+        return df.drop(["cantidad", "idHexagono", "dia", "_id"], axis=1)
 
     @staticmethod
     def get_model_from_firebase(remote_path:str):
