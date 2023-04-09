@@ -24,7 +24,7 @@ class ForecastingTrainer:
     ):
         cls._model = Sequential()
         cls._model.add(LSTM(units, input_shape=(1, look_back), activation=activation))
-        cls._model.add(Dense(2))
+        cls._model.add(Dense(1))
         cls._model.compile(loss=loss, optimizer="adam", metrics=metrics)
         
     @classmethod
@@ -45,6 +45,7 @@ class ForecastingTrainer:
         }
         :rtype: dict
         """
+
         # convert daframe in a numpy array
         df = data.values.astype("float32")
 
@@ -101,7 +102,7 @@ class ForecastingTrainer:
 
             # Vector that will be used to perform the next prediction
             next_input_vector = append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
-            
+  
             Logger.log(f"Input vector + prediction {next_input_vector}")
             
             # Getting scores from model evaluation
@@ -115,6 +116,7 @@ class ForecastingTrainer:
             # Getting performance metrics
             training_rmse = cls._get_rsme(training_results)
             test_rmse = cls._get_rsme(testing_results)
+ 
             
             result = {
                 "status": True,
@@ -127,6 +129,7 @@ class ForecastingTrainer:
             return result
 
         except Exception as e:
+            Logger.log(f"Exception happened: {e}")
             result = {"status": False, "message": e}
             return result
         
@@ -161,39 +164,36 @@ class ForecastingTrainer:
         units_array = arange(80, 101, 10)
 
         # TODO Improve performance metrics
-        Logger.log("Searching the best parameters ...")
 
         scores = []
         parameters = {}
         iteration = 0
+        results_vector = []
 
         for look_back in look_back_array:
             for units in units_array:
                 for batch_size in batch_size_array:
                     
-                    Logger.log("* Setting neuronal network")
                     ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
-
-                    Logger.log("* Preprocesing data")
                     training_data = ForecastingTrainer.preprocessing(data, look_back, training_size)
-
-                    Logger.log("* Performing training process")
                     results = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
                     
                     scores.append(results.get("scores")[1])
+                    results_vector.append(results)
+                    
                     parameters[iteration] = {
                         "look_back": look_back,
                         "units": units,
                         "batch_size": batch_size,
                         "training_size": training_size
                     }
-                    Logger.log(f"i: {iteration}, parameters: {parameters.get(iteration)}")
-                    Logger.log(f"MSE: {results.get('scores')[1]}")
-                    Logger.log(f"RMSE: {results.get('rmse')}")
+
                     iteration += 1
         
         best_parameters = parameters.get(scores.index(min(scores)))
         Logger.log(f"Best parameters {best_parameters}")
+        Logger.log(f"MSE: {results_vector[scores.index(min(scores))].get('scores')[1]}")
+        Logger.log(f"RMSE: {results_vector[scores.index(min(scores))].get('rmse')}")
         
         return best_parameters
         

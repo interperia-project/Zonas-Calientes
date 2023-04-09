@@ -34,10 +34,8 @@ class ForecastingLoader:
 
             with NamedTemporaryFile(suffix=sufix, delete=False) as tempfile:
                 if name == "model":
-                    model_object.save(f"{name}{sufix}")
                     model_object.save(tempfile.name)
                 else:
-                    dump(model_object, f"{name}{sufix}")
                     dump(model_object, tempfile.name)       
                 tempfile.seek(0)   
                 results[name] = firebase_manager.save_in_bucket(tempfile, remote_path)  
