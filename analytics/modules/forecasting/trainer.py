@@ -102,8 +102,6 @@ class ForecastingTrainer:
 
             # Vector that will be used to perform the next prediction
             next_input_vector = append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
-  
-            Logger.log(f"Input vector + prediction {next_input_vector}")
             
             # Getting scores from model evaluation
             scores = cls._model.evaluate(
