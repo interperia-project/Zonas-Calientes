@@ -50,9 +50,21 @@ class TimeForecastingManager(Manager):
         cluster_id = json_content[0].get("idHexagono")
         data = ForecastingExtractor.extract_training_data(json_content)
 
-        response = []
+        
+        if intervals:= cls._execution_parameters.get("intervals", None):
+            init_value = intervals[0]
+            final_value = intervals[-1]+1
+        else:
+            init_value = 0
+            final_value = len(data.axes[1])
 
-        for i in range(len(data.axes[1])):
+        response = []
+        Logger.log(f"From interval {init_value} to interval {final_value}")
+        
+
+        for i in range(init_value, final_value):
+            # TODO: add try except statement
+            Logger.log(f"Searching best parameter for: interval_{i}")
             best_parameters = ForecastingTrainer.search_grid(data[[f"interval_{i}"]])
 
             look_back = best_parameters.get("look_back")
@@ -61,11 +73,12 @@ class TimeForecastingManager(Manager):
             training_size = best_parameters.get("training_size")
             epochs = 100
 
+            Logger.log(f"Generating final model files for: interval_{i}")
             Logger.log("* Setting neuronal network")
             ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
 
             Logger.log("* Preprocesing data")
-            training_data = ForecastingTrainer.preprocessing(data, look_back, training_size)
+            training_data = ForecastingTrainer.preprocessing(data[[f"interval_{i}"]], look_back, training_size)
 
             Logger.log("* Performing training process")
             fitting_result = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
@@ -98,6 +111,7 @@ class TimeForecastingManager(Manager):
                     result = save_models_result
 
             else:
+                Logger.log("")
                 response.append(fitting_result)
         
         return {
