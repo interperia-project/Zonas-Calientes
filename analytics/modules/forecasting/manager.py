@@ -8,6 +8,7 @@ from modules.forecasting.loader import ForecastingLoader
 from modules.forecasting.trainer import ForecastingTrainer
 from modules.logs.loggers import Logger
 from numpy import reshape, append
+from datetime import datetime
 
 
 class TimeForecastingManager(Manager):
@@ -103,6 +104,7 @@ class TimeForecastingManager(Manager):
                         "model_remote_path": save_models_result.get("model").get("remote_path"),
                         "scaler_remote_path": save_models_result.get("scaler").get("remote_path"),
                         "next_input_vector": fitting_result.get("next_input_vector").tolist(),
+                        "training_date": datetime.now().strftime("%Y_%m_%d")
                     }
                     response.append(result)
                 else:
@@ -111,13 +113,12 @@ class TimeForecastingManager(Manager):
                     result = save_models_result
 
             else:
-                Logger.log("")
                 response.append(fitting_result)
+                
+        Logger.log ("Final results:")
+        Logger.log ({"cluster_id": cluster_id, "fields": response })
         
-        return {
-            "cluster_id": cluster_id,
-            "fields": response
-        }
+        return {"cluster_id": cluster_id, "fields": response}
 
     @classmethod
     def perform_prediction(cls):

@@ -1,7 +1,7 @@
 from logging.config import dictConfig
 from logging import getLogger, INFO
 from config.settings import LOGGING_SETTINGS
-from json import dumps
+import json
 
 class Logger:
     """Use this class to log message according with the priority lelve
@@ -16,7 +16,7 @@ class Logger:
     @classmethod
     def _parse_msg(cls, msg):
         if isinstance(msg, dict):
-            return dumps(msg)
+            return json.dumps(msg, indent=4)
         return msg
     
     @classmethod

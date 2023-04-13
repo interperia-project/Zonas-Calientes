@@ -22,6 +22,19 @@ class ForecastingTrainer:
         loss: str = "mean_squared_error",
         metrics: list = ["mse", "mae"],
     ):
+        """This fuction initialize a Sequencial type object using the follwing paramenters
+
+        :param units: number of memory cells
+        :type units: int
+        :param look_back: look_back window size
+        :type look_back: int
+        :param activation: actication fucntion, defaults to "tanh"
+        :type activation: str, optional
+        :param loss: loss function, defaults to "mean_squared_error"
+        :type loss: str, optional
+        :param metrics: metrics that will be use to stop the model training, defaults to ["mse", "mae"]
+        :type metrics: list, optional
+        """
         cls._model = Sequential()
         cls._model.add(LSTM(units, input_shape=(1, look_back), activation=activation))
         cls._model.add(Dense(1))
@@ -72,6 +85,32 @@ class ForecastingTrainer:
 
     @classmethod
     def fit_model(cls, data: dict, epochs: int, batch_size: int, verbose=0, patience=10) -> dict:
+        """This functio is used to fitthe model to the Preprocessed data
+
+        :param data: preprocessed data in the follwing format:
+                {
+                    training_dataset: {
+                        "x": np.array([sample1, sample1]) (non-labeled data)
+                        "y": np.array([sample1, sample1]) (labeled data)
+                    },
+                    test_dataset: {
+                        "x": np.array([sample1, sample1]) (non-labeled data)
+                        "y": np.array([sample1, sample1]) (labeled data)
+                    }
+                }
+        :type data: dict
+        :param epochs: number that determines how many times the model is trained on the entire training datase
+        :type epochs: int
+        :param batch_size: the number of training examples used in one iteration
+        :type batch_size: int
+        :param verbose: _description_, defaults to 0
+        :type verbose: int, optional
+        :param patience: epochs to wait before stopping the training process if the validation loss does not improve.
+        :type patience: int, optional
+        :return: fitting results. including scores, rmse and the sample that must be used to get the following element 
+        in the time series
+        :rtype: dict
+        """
         try:
             cls._model.fit(
                 data.get("training_dataset").get("x"),
@@ -157,8 +196,8 @@ class ForecastingTrainer:
 
         training_size = 0.7
         epochs = 100
-        batch_size_array = [16, 32]
-        look_back_array = arange(7,31, 7)
+        batch_size_array = [8, 16, 32]
+        look_back_array = arange(7,42, 7)
         units_array = arange(80, 101, 10)
 
         # TODO Improve performance metrics
