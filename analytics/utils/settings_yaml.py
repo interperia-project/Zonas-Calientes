@@ -1,4 +1,5 @@
 import pkgutil
+
 import yaml
 
 
@@ -11,7 +12,6 @@ def load_settings(package, resource="logging.yaml"):
     """
     try:
         settings = yaml.safe_load(pkgutil.get_data(package, resource))
-    except yaml.YAMLError as exc:  # pylint: disable=broad-except
-        print(exc)
+    except yaml.YAMLError:  # pylint: disable=broad-except
         settings = yaml.safe_load(pkgutil.get_data(package, resource))  # pylint: disable=no-value-for-parameter
     return settings
