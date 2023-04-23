@@ -1,12 +1,12 @@
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
 from keras.callbacks import EarlyStopping
+from keras.layers import LSTM, Dense
+from keras.models import Sequential
+from numpy import append, arange, array, reshape, sqrt
 from pandas import DataFrame
-from numpy import reshape, array, sqrt
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
+
 from modules.logs.loggers import Logger
-from numpy import arange, append
 
 
 class ForecastingTrainer:
@@ -20,18 +20,31 @@ class ForecastingTrainer:
         look_back: int,
         activation: str = "tanh",
         loss: str = "mean_squared_error",
-        metrics: list = ["mse", "mae"],
+        metrics: list = None,
     ):
+        """This fuction initialize a Sequencial type object using the follwing paramenters
+
+        :param units: number of memory cells
+        :type units: int
+        :param look_back: look_back window size
+        :type look_back: int
+        :param activation: actication fucntion, defaults to "tanh"
+        :type activation: str, optional
+        :param loss: loss function, defaults to "mean_squared_error"
+        :type loss: str, optional
+        :param metrics: metrics that will be use to stop the model training, defaults to ["mse", "mae"]
+        :type metrics: list, optional
+        """
         cls._model = Sequential()
         cls._model.add(LSTM(units, input_shape=(1, look_back), activation=activation))
         cls._model.add(Dense(1))
-        cls._model.compile(loss=loss, optimizer="adam", metrics=metrics)
-        
+        cls._model.compile(loss=loss, optimizer="adam", metrics= metrics if metrics else ["mse", "mae"])
+
     @classmethod
     def preprocessing(cls, data: DataFrame,look_back: int, training_len: float) -> dict:
         """Function used to preprocess the raw data. return a dataset for training and
         another for testing
-        :param data: dataframe with the data
+        :param data: raw training data
         :type data: DataFrame
         :param look_back: analysis windows size (sample size)
         :type look_back: int
@@ -47,15 +60,15 @@ class ForecastingTrainer:
         """
 
         # convert daframe in a numpy array
-        df = data.values.astype("float32")
+        dataset_values = data.to_numpy().astype("float32")
 
         # normalize the dataset
         cls._scaler = MinMaxScaler(feature_range=(0, 1))
-        df = cls._scaler.fit_transform(df)
+        dataset_values = cls._scaler.fit_transform(dataset_values)
 
         # split into train and test sets
         train_size = int(len(data) * training_len)
-        train, test = df[0:train_size, :], df[train_size : len(df), :]
+        train, test = dataset_values[0:train_size, :], dataset_values[train_size : len(dataset_values), :]
 
         # reshape into X=t and Y=t+1
         train_x, train_y = cls._convert_to_matrix(train, look_back)
@@ -66,12 +79,38 @@ class ForecastingTrainer:
         test_x = reshape(test_x, (test_x.shape[0], 1, test_x.shape[1]))
 
         return {
-            "training_dataset": {"x":train_x, "y":train_y}, 
+            "training_dataset": {"x":train_x, "y":train_y},
             "test_dataset": {"x":test_x, "y":test_y}
         }
 
     @classmethod
     def fit_model(cls, data: dict, epochs: int, batch_size: int, verbose=0, patience=10) -> dict:
+        """This functio is used to fitthe model to the Preprocessed data
+
+        :param data: preprocessed data in the follwing format:
+                {
+                    training_dataset: {
+                        "x": np.array([sample1, sample1]) (non-labeled data)
+                        "y": np.array([sample1, sample1]) (labeled data)
+                    },
+                    test_dataset: {
+                        "x": np.array([sample1, sample1]) (non-labeled data)
+                        "y": np.array([sample1, sample1]) (labeled data)
+                    }
+                }
+        :type data: dict
+        :param epochs: number that determines how many times the model is trained on the entire training datase
+        :type epochs: int
+        :param batch_size: the number of training examples used in one iteration
+        :type batch_size: int
+        :param verbose: _description_, defaults to 0
+        :type verbose: int, optional
+        :param patience: epochs to wait before stopping the training process if the validation loss does not improve.
+        :type patience: int, optional
+        :return: fitting results. including scores, rmse and the sample that must be used to get the following element
+        in the time series
+        :rtype: dict
+        """
         try:
             cls._model.fit(
                 data.get("training_dataset").get("x"),
@@ -86,14 +125,14 @@ class ForecastingTrainer:
 
             train_predict = cls._model.predict(data.get("training_dataset").get("x"), verbose=verbose)
             test_predict = cls._model.predict(data.get("test_dataset").get("x"), verbose=verbose)
-            
-            
+
+
             # invert predictions
             training_results = {
                 "prediction": cls._scaler.inverse_transform(train_predict),
                 "original_data": cls._scaler.inverse_transform([data.get("training_dataset").get("y")])
             }
-            
+
             # invert predictions
             testing_results  = {
                 "prediction": cls._scaler.inverse_transform(test_predict),
@@ -102,10 +141,10 @@ class ForecastingTrainer:
 
             # Vector that will be used to perform the next prediction
             next_input_vector = append(data.get("test_dataset").get("x")[-1].reshape(-1),test_predict[-1])
-            
+
             # Getting scores from model evaluation
             scores = cls._model.evaluate(
-                data.get("test_dataset").get("x"), 
+                data.get("test_dataset").get("x"),
                 data.get("test_dataset").get("y"),
                 batch_size = batch_size,
                 verbose=verbose
@@ -114,8 +153,8 @@ class ForecastingTrainer:
             # Getting performance metrics
             training_rmse = cls._get_rsme(training_results)
             test_rmse = cls._get_rsme(testing_results)
- 
-            
+
+
             result = {
                 "status": True,
                 "scores": scores,
@@ -130,18 +169,18 @@ class ForecastingTrainer:
             Logger.log(f"Exception happened: {e}")
             result = {"status": False, "message": e}
             return result
-        
-    
+
+
     @classmethod
     def get_models(cls) ->dict:
         return {"model": cls._model,"scaler": cls._scaler}
-    
+
     @classmethod
     def _get_rsme(cls, data: dict) -> dict:
         original_data = data.get("original_data")
         prediction = data.get("prediction")
         return sqrt(mean_squared_error(original_data[0], prediction[:,0]))
-    
+
     @staticmethod
     def _convert_to_matrix(dataset, look_back=1):
         data_x, data_y = [], []
@@ -150,15 +189,15 @@ class ForecastingTrainer:
             data_x.append(a)
             data_y.append(dataset[i + look_back, 0])
         return array(data_x), array(data_y)
-    
-    
+
+
     @classmethod
     def search_grid(cls, data: DataFrame) -> dict:
 
         training_size = 0.7
         epochs = 100
-        batch_size_array = [16, 32]
-        look_back_array = arange(7,31, 7)
+        batch_size_array = [8, 16, 32]
+        look_back_array = arange(7,42, 7)
         units_array = arange(80, 101, 10)
 
         # TODO Improve performance metrics
@@ -171,14 +210,14 @@ class ForecastingTrainer:
         for look_back in look_back_array:
             for units in units_array:
                 for batch_size in batch_size_array:
-                    
+
                     ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
                     training_data = ForecastingTrainer.preprocessing(data, look_back, training_size)
                     results = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
-                    
+
                     scores.append(results.get("scores")[1])
                     results_vector.append(results)
-                    
+
                     parameters[iteration] = {
                         "look_back": look_back,
                         "units": units,
@@ -187,11 +226,10 @@ class ForecastingTrainer:
                     }
 
                     iteration += 1
-        
+
         best_parameters = parameters.get(scores.index(min(scores)))
         Logger.log(f"Best parameters {best_parameters}")
         Logger.log(f"MSE: {results_vector[scores.index(min(scores))].get('scores')[1]}")
         Logger.log(f"RMSE: {results_vector[scores.index(min(scores))].get('rmse')}")
-        
+
         return best_parameters
-        

@@ -1,5 +1,6 @@
-from config.settings import FIREBASE_CONFIGS
 from firebase_admin import credentials, get_app, initialize_app, storage
+
+from config.settings import FIREBASE_CONFIGS
 
 
 class FireBaseClient:
@@ -9,7 +10,7 @@ class FireBaseClient:
             self.self._firebase_client = initialize_app(cred, bucket)
         except Exception:
             self._firebase_client = get_app()
-            
+
 
     def _get_configs(self, project_name: str):
         """This function is used get the Firebase credentials and the bucket from project settings
@@ -48,7 +49,7 @@ class FireBaseClient:
 
         except Exception as e:
             return {"status": False, "message": e}
-        
+
     @staticmethod
     def download_file(remote_path: str, file_object: str):
         """Function used to download a file from a firebase bucket

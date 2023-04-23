@@ -1,20 +1,22 @@
-from fastapi import Request, Depends
-from fastapi.responses import JSONResponse
-from utils.utility_functions import json_message
-from modules.forecasting.manager import TimeForecastingManager
 from typing import Annotated
+
+from fastapi import Depends, Request
+from fastapi.responses import JSONResponse
+
+from modules.forecasting.manager import TimeForecastingManager
 from modules.logs.loggers import Logger
+from utils.utility_functions import json_message
 
 
 class AnalyticEndPoints:
-    
-    # TODO: using the endpoints class and the add_api_router functio just intruduce and addtional complexity to the code. 
+    # TODO: using the endpoints class and the add_api_router functio just intruduce and addtional
+    # complexity to the code
     # I recomend use a single module and yo use the app decorators
 
     @staticmethod
     async def get_body(request: Request):
         return await request.json()
-    
+
     @classmethod
     async def _index_endpoint(cls):
         message = "Analitycs APIREST is working..."
@@ -53,16 +55,57 @@ class AnalyticEndPoints:
 
     @classmethod
     def _prediction_endpoint(cls, json_content: Annotated[dict, Depends(get_body)]) -> dict:
-        """_summary_
+        """
+        Enpoint to perform the prediciton of the next point in the time series based on a model and in the last
+        predicted sampple
 
-        :param request: _description_
-        :type request: Request
-        :return: _description_
+        :param json_content: Information to perform the prediction. The following format is expected
+                   {
+                "cluster_id": "example_id",
+                "fields": [
+                    {
+                        "interval": 0,
+                        "model_remote_path": "firebase_model_path_interval_0.j5",
+                        "scaler_remote_path": "firabese_scaler_path_interval_0.plk",
+                        "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    {
+                        "interval": 2,
+                        "model_remote_path": "firebase_model_path_interval_1.j5",
+                        "scaler_remote_path": "firabese_scaler_path_interval_1.plk",
+                        "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    .
+                    .
+                    .
+                ]
+            }
+        :type json_content: Annotated[dict, Depends(get_body)]
+        :return: Predicted valuea and next input vector for each interval of the cluster
+        ex:
+            {
+                "cluster_id": "cluster_id",
+                "results": [
+                    {
+                    "interval": 0,
+                    "prediction": value after apply inverse_transform from scaler object
+                    "next_input_vector": [value_1, value_2, value_3...]
+                    },
+                    {
+                    "interval": 1,
+                    "prediction": value after apply inverse_transform from scaler object
+                    "next_input_vector":[value_1, value_2, value_3...]
+                    }
+                    .
+                    .
+                    .
+                ]
+            }
         :rtype: dict
         """
         Logger.log("starting predictor")
         execution_parameters = {"process_function": "perform_prediction", "json_content": json_content}
-        operation_result = TimeForecastingManager.perform_process(execution_parameters) 
+        operation_result = TimeForecastingManager.perform_process(execution_parameters)
         return JSONResponse(operation_result)
 
 

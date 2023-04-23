@@ -10,6 +10,14 @@ class ApiRestManager:
 
     @classmethod
     def setup(cls) -> FastAPI:
+        """
+        Following configuration are performed:
+        - Set all routes defined in the module apirest_endpoint
+        - Define corsmiddleware to allow share information between hosts
+
+        :return: _description_
+        :rtype: FastAPI
+        """
         Logger.log("::::.... Starting APIREST setup (Analytic component) .....::::")
         app = FastAPI()
         app.include_router(cls._setup_router())

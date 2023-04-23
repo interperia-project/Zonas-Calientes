@@ -1,13 +1,14 @@
+from datetime import datetime
 from json import dumps
 
-from interfaces.manager import Manager
+from numpy import append, reshape
 from tensorflow import random
 
+from interfaces.manager import Manager
 from modules.forecasting.extractor import ForecastingExtractor
 from modules.forecasting.loader import ForecastingLoader
 from modules.forecasting.trainer import ForecastingTrainer
 from modules.logs.loggers import Logger
-from numpy import reshape, append
 
 
 class TimeForecastingManager(Manager):
@@ -19,7 +20,6 @@ class TimeForecastingManager(Manager):
         """
         Perform process methods takes the name of the function to be executen from a dictionaty,
         check if is implemented in the class, and then run it
-
         :param execution_parameters: dictionary that containg the fucntion to be executed and
         the execution parameters
         :type execution_parameters: dict
@@ -50,7 +50,6 @@ class TimeForecastingManager(Manager):
         cluster_id = json_content[0].get("idHexagono")
         data = ForecastingExtractor.extract_training_data(json_content)
 
-        
         if intervals:= cls._execution_parameters.get("intervals", None):
             init_value = intervals[0]
             final_value = intervals[-1]+1
@@ -60,7 +59,6 @@ class TimeForecastingManager(Manager):
 
         response = []
         Logger.log(f"From interval {init_value} to interval {final_value}")
-        
 
         for i in range(init_value, final_value):
             # TODO: add try except statement
@@ -74,13 +72,8 @@ class TimeForecastingManager(Manager):
             epochs = 100
 
             Logger.log(f"Generating final model files for: interval_{i}")
-            Logger.log("* Setting neuronal network")
             ForecastingTrainer.setup_lstm_neuronal_network(units, look_back)
-
-            Logger.log("* Preprocesing data")
             training_data = ForecastingTrainer.preprocessing(data[[f"interval_{i}"]], look_back, training_size)
-
-            Logger.log("* Performing training process")
             fitting_result = ForecastingTrainer.fit_model(training_data, epochs, batch_size)
 
             if fitting_result.get("status"):
@@ -103,6 +96,7 @@ class TimeForecastingManager(Manager):
                         "model_remote_path": save_models_result.get("model").get("remote_path"),
                         "scaler_remote_path": save_models_result.get("scaler").get("remote_path"),
                         "next_input_vector": fitting_result.get("next_input_vector").tolist(),
+                        "training_date": datetime.now().strftime("%Y_%m_%d")
                     }
                     response.append(result)
                 else:
@@ -111,13 +105,12 @@ class TimeForecastingManager(Manager):
                     result = save_models_result
 
             else:
-                Logger.log("")
                 response.append(fitting_result)
-        
-        return {
-            "cluster_id": cluster_id,
-            "fields": response
-        }
+
+        Logger.log ("Final results:")
+        Logger.log ({"cluster_id": cluster_id, "fields": response })
+
+        return {"cluster_id": cluster_id, "fields": response}
 
     @classmethod
     def perform_prediction(cls):
@@ -126,8 +119,8 @@ class TimeForecastingManager(Manager):
         in firebase bucket where the scalers and models (by time interval) are stored
         :return: Prediction for the next value in the time series and the next_input vector
         :rtype: dict
-        
-        Format for inpunt json data: 
+
+        Format for inpunt json data:
             {
                 "cluster_id": "example_id",
                 "fields": [
@@ -149,7 +142,7 @@ class TimeForecastingManager(Manager):
                 ]
             }
 
-        Format for response json:    
+        Format for response json:
             {
                 "cluster_id": "cluster_id",
                 "results": [
@@ -177,19 +170,19 @@ class TimeForecastingManager(Manager):
             try:
                 input_vector = field.get("next_input_vector")
                 input_vector = reshape(input_vector, (1,1,len(input_vector)))
-                
+
                 Logger.log("* Getting models from Firebase")
                 # TODO: Save model in local if not exist (?)
                 scaler = ForecastingExtractor.get_model_from_firebase(field.get("scaler_remote_path"))
                 model = ForecastingExtractor.get_model_from_firebase(field.get("model_remote_path"))
-                
+
                 Logger.log(f"Performing prediction for interval {field.get('interval')}")
                 model_prediction = model.predict(input_vector)
                 real_prediction_value = scaler.inverse_transform(model_prediction).reshape(-1)
                 next_input_vector = append(field.get("next_input_vector"), reshape(model_prediction,-1))
 
                 result = {
-                    "interval": field.get('interval'),
+                    "interval": field.get("interval"),
                     "prediction": real_prediction_value.tolist()[0],
                     "next_input_vector": next_input_vector[1:].tolist()
                 }
@@ -197,8 +190,4 @@ class TimeForecastingManager(Manager):
             except  Exception as e:
                 Logger.log(f"Exception -> {e}")
 
-        return  {
-            "cluster_id": json_content.get("cluster_id"),
-            "results": operation_result
-        }
-        
+        return  {"cluster_id": json_content.get("cluster_id"),  "results": operation_result}

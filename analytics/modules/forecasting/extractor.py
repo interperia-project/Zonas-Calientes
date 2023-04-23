@@ -1,8 +1,8 @@
 from datetime import date
 from tempfile import NamedTemporaryFile
 
-from keras.models import load_model
 from joblib import load
+from keras.models import load_model
 from pandas import DataFrame, DatetimeIndex, date_range, to_datetime
 
 from modules.repository.firebase_client import FireBaseClient
@@ -18,12 +18,12 @@ class ForecastingExtractor:
         :return: Dataframe with as many columns as time intervals in the json content
         :rtype: DataFrame
         """
-        df = DataFrame(json_content)
-        df = df.join(DataFrame(df["cantidad"].tolist()).add_prefix("interval_"))
-        df = df.set_index(to_datetime(df["dia"], format="%m/%d/%Y"))
-        df.index = DatetimeIndex(df.index) 
-        df = df.reindex(date_range(df.index.min(), date.today()), fill_value=0)
-        return df.drop(["cantidad", "idHexagono", "dia", "_id"], axis=1)
+        training_data = DataFrame(json_content)
+        training_data = training_data.join(DataFrame(training_data["cantidad"].tolist()).add_prefix("interval_"))
+        training_data = training_data.set_index(to_datetime(training_data["dia"], format="%m/%d/%Y"))
+        training_data.index = DatetimeIndex(training_data.index)
+        training_data = training_data.reindex(date_range(training_data.index.min(), date.today()), fill_value=0)
+        return training_data.drop(["cantidad", "idHexagono", "dia", "_id"], axis=1)
 
     @staticmethod
     def get_model_from_firebase(remote_path:str):
@@ -36,13 +36,12 @@ class ForecastingExtractor:
 
         firebase_manager = FireBaseClient("interperia")
         sufix = ".h5" if ".h5" in remote_path  else ".plk"
-        
+
         with NamedTemporaryFile(suffix=sufix, delete=False) as temp_file:
             result = firebase_manager.download_file(remote_path, temp_file.name)
-            
+
             if not result.get("status"):
                 return {"status": False, "message": "Download error"}
-            
-            model_objet = load_model(temp_file.name) if sufix == ".h5" else load(temp_file.name)              
+
+            model_objet = load_model(temp_file.name) if sufix == ".h5" else load(temp_file.name)
             return model_objet
-        
